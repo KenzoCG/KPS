@@ -79,9 +79,6 @@ def main():
         compileShader(FRAGMENT_SHADER_SRC, GL_FRAGMENT_SHADER)
     )
 
-    # --- Setup Grid ---
-    gird3d = 
-
     # --- Setup 3D Cube VAO ---
     cube_vao = glGenVertexArrays(1)
     cube_vbo = glGenBuffers(1)
