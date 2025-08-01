@@ -1,0 +1,7 @@
+# ------------------------------------------------------------------------------- #
+# EXTERNAL PACKAGES
+# ------------------------------------------------------------------------------- #
+
+pip install glfw
+pip install pyglm
+pip install PyOpenGL PyOpenGL_accelerate
