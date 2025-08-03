@@ -65,7 +65,7 @@ def main():
     if not glfw.init():
         raise Exception("GLFW initialization failed")
 
-    window = glfw.create_window(800, 600, "3D + 2D Overlay", None, None)
+    window = glfw.create_window(800, 600, "KenzoCG Simulator", None, None)
     if not window:
         glfw.terminate()
         raise Exception("GLFW window creation failed")
