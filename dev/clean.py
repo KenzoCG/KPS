@@ -6,7 +6,7 @@ def clean_cache_files():
     print("< Cleaning.... >")
     for root, dirs, files in os.walk(".", topdown=False):
         for file in files:
-            if file.endswith(".pyc") or file.endswith(".blend1"):
+            if file.endswith(".pyc"):
                 path = os.path.join(root, file)
                 print(f"Del File : {path}")
                 os.remove(path)
