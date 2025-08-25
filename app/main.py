@@ -68,7 +68,9 @@ def setup():
 # ------------------------------------------------------------------------------- #
 
 def update(window: Window):
-    pass
+    if window.is_key_pressed(key='ESCAPE'):
+        window.stop()
+        return
 
 
 def draw_3d(window: Window):

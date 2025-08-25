@@ -70,46 +70,41 @@ class Window:
     def run(self, update_func, draw_3d_func, draw_2d_func=None):
         # Main Loop
         while not glfw.window_should_close(self.window):
-
             # Time
             self.current_time = glfw.get_time()
             self.delta_time = self.current_time - self.last_time
-
             # Clear
             width, height = glfw.get_framebuffer_size(self.window)
             glEnable(GL_DEPTH_TEST)
             glViewport(0, 0, width, height)
             glClearColor(0.1, 0.1, 0.1, 1.0)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
             # Event
             glfw.poll_events()
-
             # Update
-            if update_func:
+            if callable(update_func):
                 update_func(self)
-
             # Draw 3D
-            if draw_3d_func:
+            if callable(draw_3d_func):
                 draw_3d_func(self)
-
             # Draw 2D
-            if draw_2d_func:
+            if callable(draw_2d_func):
                 draw_2d_func(self)
-
             # Swap
             glfw.swap_buffers(self.window)
-
             # Time
             self.last_time = self.current_time
-
         # Terminate
-        self.close()
+        self.terminate()
 
 
-    def close(self):
+    def stop(self):
         if self.window is not None:
             glfw.set_window_should_close(self.window, True)
+
+
+    def terminate(self):
+        self.stop()
         glfw.terminate()
         self.window = None
 
