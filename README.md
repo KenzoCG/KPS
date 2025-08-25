@@ -1,5 +1,5 @@
 # KenzoCG Python Simulator
-Goal - Create simple to use utility libraries for drawing 3D and 2D graphics in Python.
+Goal - Create a simple to use code base for drawing 3D and 2D graphics in Python.
 
 ### Dependencies
 [GLFW](https://pypi.org/project/glfw) - Windowing / Events / Context <br>
