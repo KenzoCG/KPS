@@ -2,170 +2,148 @@
 # IMPORTS
 # ------------------------------------------------------------------------------- #
 
-import glfw
 from OpenGL.GL import *
-from OpenGL.GL.shaders import compileProgram, compileShader
 import glm
-import numpy as np
-import ctypes
+
+from . import utils
+from . import shaders
+
+from .components.window import Window
 
 # ------------------------------------------------------------------------------- #
-# SHADERS
+# INIT
 # ------------------------------------------------------------------------------- #
 
-VERTEX_SHADER_SRC = """
-#version 330 core
-layout (location = 0) in vec3 aPos;
+SHADER = None
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
+CUBE_VAO = None
+CUBE_VBO = None
 
-void main()
-{
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-}
-"""
+SQUARE_VAO = None
+SQUARE_VBO = None
 
-FRAGMENT_SHADER_SRC = """
-#version 330 core
-uniform vec4 uColor;
-out vec4 FragColor;
 
-void main()
-{
-    FragColor = uColor;
-}
-"""
+def setup():
+
+    # --- Shaders --- #
+    global SHADER
+    SHADER = shaders.Shader()
+    SHADER.setup(vert_file_name="vert", frag_file_name="frag")
+    if not SHADER.is_valid():
+        return False
+
+
+    # --- 3D --- #
+    global CUBE_VAO, CUBE_VBO
+    verts = utils.presets.cube_verts()
+
+    CUBE_VAO = glGenVertexArrays(1)
+    CUBE_VBO = glGenBuffers(1)
+
+    glBindVertexArray(CUBE_VAO)
+    glBindBuffer(GL_ARRAY_BUFFER, CUBE_VBO)
+    glBufferData(GL_ARRAY_BUFFER, verts.nbytes, verts.ptr, GL_STATIC_DRAW)
+
+    glEnableVertexAttribArray(0)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * 4, ctypes.c_void_p(0))
+
+
+    # --- 2D --- #
+    global SQUARE_VAO, SQUARE_VBO
+    SQUARE_VAO = glGenVertexArrays(1)
+    SQUARE_VBO = glGenBuffers(1)
+
+    glBindVertexArray(SQUARE_VAO)
+    glBindBuffer(GL_ARRAY_BUFFER, SQUARE_VBO)
+    glBufferData(GL_ARRAY_BUFFER, 0, None, GL_DYNAMIC_DRAW)
+
+    glEnableVertexAttribArray(0)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * 4, ctypes.c_void_p(0))
+
+    glBindVertexArray(0)
+    return True
 
 # ------------------------------------------------------------------------------- #
-# CUBE
+# CALLBACKS
 # ------------------------------------------------------------------------------- #
 
-cube_vertices = np.array([
-    -0.5, -0.5, -0.5,  0.5, -0.5, -0.5,  0.5,  0.5, -0.5,
-     0.5,  0.5, -0.5, -0.5,  0.5, -0.5, -0.5, -0.5, -0.5,
-    -0.5, -0.5,  0.5,  0.5, -0.5,  0.5,  0.5,  0.5,  0.5,
-     0.5,  0.5,  0.5, -0.5,  0.5,  0.5, -0.5, -0.5,  0.5,
-    -0.5,  0.5,  0.5, -0.5,  0.5, -0.5, -0.5, -0.5, -0.5,
-    -0.5, -0.5, -0.5, -0.5, -0.5,  0.5, -0.5,  0.5,  0.5,
-     0.5,  0.5,  0.5,  0.5,  0.5, -0.5,  0.5, -0.5, -0.5,
-     0.5, -0.5, -0.5,  0.5, -0.5,  0.5,  0.5,  0.5,  0.5,
-    -0.5, -0.5, -0.5,  0.5, -0.5, -0.5,  0.5, -0.5,  0.5,
-     0.5, -0.5,  0.5, -0.5, -0.5,  0.5, -0.5, -0.5, -0.5,
-    -0.5,  0.5, -0.5,  0.5,  0.5, -0.5,  0.5,  0.5,  0.5,
-     0.5,  0.5,  0.5, -0.5,  0.5,  0.5, -0.5,  0.5, -0.5
-], dtype=np.float32)
+def update(window: Window):
+    pass
+
+
+def draw_3d(window: Window):
+    # Projections
+    model = glm.rotate(glm.mat4(1.0), window.current_time, glm.vec3(0.5, 1.0, 0.0))
+    view = glm.translate(glm.mat4(1.0), glm.vec3(0.0, 0.0, -3.0))
+    fov = glm.radians(45.0)
+    aspect =  window.width / window.height
+    near = 0.1
+    far =  100.0
+    projection = glm.perspective(fov, aspect, near, far)
+
+    # Shader
+    SHADER.use()
+    SHADER.set_uniform_mat4(name="model", mat=model)
+    SHADER.set_uniform_mat4(name="view", mat=view)
+    SHADER.set_uniform_mat4(name="projection", mat=projection)
+    SHADER.set_uniform_vec4(name="uColor", vec=glm.vec4(0.2, 0.6, 1.0, 1.0))
+
+    # Arrays
+    glBindVertexArray(CUBE_VAO)
+
+    # Draw
+    glDrawArrays(GL_TRIANGLES, 0, 36)
+
+    # Depth - OFF
+    glDisable(GL_DEPTH_TEST)
+
+
+def draw_2d(window: Window):
+    # Projections
+    model = glm.mat4(1.0)
+    view = glm.mat4(1.0)
+    projection = glm.ortho(0, window.width, window.height, 0)
+
+    # Shader
+    SHADER.use()
+    SHADER.set_uniform_mat4(name="model", mat=model)
+    SHADER.set_uniform_mat4(name="view", mat=view)
+    SHADER.set_uniform_mat4(name="projection", mat=projection)
+    SHADER.set_uniform_vec4(name="uColor", vec=glm.vec4(0.5, 0.5, 0.5, 0.5))
+
+    # Verts
+    verts = utils.presets.square_verts()
+
+    # Arrays
+    glBindVertexArray(SQUARE_VAO)
+    glBindBuffer(GL_ARRAY_BUFFER, SQUARE_VBO)
+    glBufferData(GL_ARRAY_BUFFER, verts.nbytes, verts.ptr, GL_DYNAMIC_DRAW)
+
+    # Blend - ON
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+    # Draw
+    glDrawArrays(GL_TRIANGLES, 0, 6)
+
+    # Blend - OFF
+    glDisable(GL_BLEND)
 
 # ------------------------------------------------------------------------------- #
 # APP
 # ------------------------------------------------------------------------------- #
 
 def main():
-    if not glfw.init():
-        raise Exception("GLFW initialization failed")
+    window = Window(width=800, height=600, title="KenzoCG Python App")
+    window.setup()
+    if not window.valid:
+        window.close()
+        return
+    if not setup():
+        window.close()
+        return
+    window.run(update_func=update, draw_3d_func=draw_3d, draw_2d_func=draw_2d)
 
-    window = glfw.create_window(800, 600, "KenzoCG Simulator", None, None)
-    if not window:
-        glfw.terminate()
-        raise Exception("GLFW window creation failed")
-
-    glfw.make_context_current(window)
-    glEnable(GL_DEPTH_TEST)
-
-    # Compile shader
-    shader = compileProgram(
-        compileShader(VERTEX_SHADER_SRC, GL_VERTEX_SHADER),
-        compileShader(FRAGMENT_SHADER_SRC, GL_FRAGMENT_SHADER)
-    )
-
-    # --- Setup 3D Cube VAO ---
-    cube_vao = glGenVertexArrays(1)
-    cube_vbo = glGenBuffers(1)
-
-    glBindVertexArray(cube_vao)
-    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo)
-    glBufferData(GL_ARRAY_BUFFER, cube_vertices.nbytes, cube_vertices, GL_STATIC_DRAW)
-
-    glEnableVertexAttribArray(0)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * 4, ctypes.c_void_p(0))
-
-    # --- Setup 2D UI VAO ---
-    ui_vao = glGenVertexArrays(1)
-    ui_vbo = glGenBuffers(1)
-
-    glBindVertexArray(ui_vao)
-    glBindBuffer(GL_ARRAY_BUFFER, ui_vbo)
-    glBufferData(GL_ARRAY_BUFFER, 0, None, GL_DYNAMIC_DRAW)  # Empty for now
-
-    glEnableVertexAttribArray(0)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * 4, ctypes.c_void_p(0))
-
-    glBindVertexArray(0)
-
-    # --- Main loop ---
-    while not glfw.window_should_close(window):
-        glfw.poll_events()
-        width, height = glfw.get_framebuffer_size(window)
-
-        glViewport(0, 0, width, height)
-        glClearColor(0.1, 0.1, 0.1, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glUseProgram(shader)
-
-        # --- Draw 3D Cube ---
-        glEnable(GL_DEPTH_TEST)
-        model = glm.rotate(glm.mat4(1.0), glfw.get_time(), glm.vec3(0.5, 1.0, 0.0))
-        view = glm.translate(glm.mat4(1.0), glm.vec3(0.0, 0.0, -3.0))
-        projection = glm.perspective(glm.radians(45.0), width / height, 0.1, 100.0)
-
-        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm.value_ptr(model))
-        glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm.value_ptr(view))
-        glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm.value_ptr(projection))
-        glUniform4f(glGetUniformLocation(shader, "uColor"), 0.2, 0.6, 1.0, 1.0)
-
-        glBindVertexArray(cube_vao)
-        glDrawArrays(GL_TRIANGLES, 0, 36)
-
-        # --- Draw 2D Overlay ---
-        glDisable(GL_DEPTH_TEST)
-
-        model = glm.mat4(1.0)
-        view = glm.mat4(1.0)
-        projection = glm.ortho(0, width, height, 0)  # Top-left origin
-
-        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, glm.value_ptr(model))
-        glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, glm.value_ptr(view))
-        glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, glm.value_ptr(projection))
-        glUniform4f(glGetUniformLocation(shader, "uColor"), 0.5, 0.5, 0.5, 0.5)
-
-        ui_quad = np.array([
-            20, 20, 0,
-            400, 20, 0,
-            400, 200, 0,
-            400, 200, 0,
-            20, 200, 0,
-            20, 20, 0
-        ], dtype=np.float32)
-
-        glBindVertexArray(ui_vao)
-        glBindBuffer(GL_ARRAY_BUFFER, ui_vbo)
-        glBufferData(GL_ARRAY_BUFFER, ui_quad.nbytes, ui_quad, GL_DYNAMIC_DRAW)
-
-        # State - ON
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-        # Draw
-        glDrawArrays(GL_TRIANGLES, 0, 6)
-
-        # State - OFF
-        glDisable(GL_BLEND)
-
-        # --- Done ---
-        glfw.swap_buffers(window)
-
-    glfw.terminate()
 
 if __name__ == "__main__":
     main()
