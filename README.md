@@ -1,4 +1,4 @@
-# KenzoCG Python Simulator
+# KenzoCG Python OpenGL
 Goal - Create a simple to use code base for drawing 3D and 2D graphics in Python.
 
 ### Dependencies
